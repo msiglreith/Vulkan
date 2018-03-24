@@ -23,6 +23,21 @@
 #include "VulkanAndroid.h"
 #endif
 
+#if defined(VK_USE_PLATFORM_UWP_RKZ)
+typedef VkFlags VkUWPSurfaceCreateFlagsRKZ;
+
+#define VK_STRUCTURE_TYPE_UWP_SURFACE_CREATE_INFO_RKZ 1001000000
+
+typedef struct VkUWPSurfaceCreateInfoRKZ {
+    VkStructureType                 sType;
+    const void*                     pNext;
+    VkUWPSurfaceCreateFlagsRKZ      flags;
+    IUnknown*                       pWindow;
+} VkUWPSurfaceCreateInfoRKZ;
+
+typedef VkResult(VKAPI_PTR *PFN_vkCreateUWPSurfaceRKZ)(VkInstance instance, const VkUWPSurfaceCreateInfoRKZ* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface);
+#endif
+
 // Macro to get a procedure address based on a vulkan instance
 #define GET_INSTANCE_PROC_ADDR(inst, entrypoint)                        \
 {                                                                       \
@@ -65,6 +80,8 @@ private:
 	PFN_vkGetSwapchainImagesKHR fpGetSwapchainImagesKHR;
 	PFN_vkAcquireNextImageKHR fpAcquireNextImageKHR;
 	PFN_vkQueuePresentKHR fpQueuePresentKHR;
+
+    PFN_vkCreateUWPSurfaceRKZ fpCreateUWPSurfaceRKZ;
 public:
 	VkFormat colorFormat;
 	VkColorSpaceKHR colorSpace;
@@ -79,6 +96,8 @@ public:
 	/** @brief Creates the platform specific surface abstraction of the native platform window used for presentation */	
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
 	void initSurface(void* platformHandle, void* platformWindow)
+#elif defined(VK_USE_PLATFORM_UWP_RKZ)
+    void initSurface(IUnknown* window)
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR)
 	void initSurface(ANativeWindow* window)
 #elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
@@ -100,6 +119,11 @@ public:
 		surfaceCreateInfo.hinstance = (HINSTANCE)platformHandle;
 		surfaceCreateInfo.hwnd = (HWND)platformWindow;
 		err = vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
+#elif defined(VK_USE_PLATFORM_UWP_RKZ)
+        VkUWPSurfaceCreateInfoRKZ surfaceCreateInfo = {};
+        surfaceCreateInfo.sType = static_cast<VkStructureType>(VK_STRUCTURE_TYPE_UWP_SURFACE_CREATE_INFO_RKZ);
+        surfaceCreateInfo.pWindow = window; 
+        err = fpCreateUWPSurfaceRKZ(instance, &surfaceCreateInfo, nullptr, &surface);
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR)
 		VkAndroidSurfaceCreateInfoKHR surfaceCreateInfo = {};
 		surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
@@ -264,6 +288,7 @@ public:
 		GET_INSTANCE_PROC_ADDR(instance, GetPhysicalDeviceSurfaceCapabilitiesKHR);
 		GET_INSTANCE_PROC_ADDR(instance, GetPhysicalDeviceSurfaceFormatsKHR);
 		GET_INSTANCE_PROC_ADDR(instance, GetPhysicalDeviceSurfacePresentModesKHR);
+        GET_INSTANCE_PROC_ADDR(instance, CreateUWPSurfaceRKZ);
 		GET_DEVICE_PROC_ADDR(device, CreateSwapchainKHR);
 		GET_DEVICE_PROC_ADDR(device, DestroySwapchainKHR);
 		GET_DEVICE_PROC_ADDR(device, GetSwapchainImagesKHR);

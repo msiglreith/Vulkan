@@ -264,7 +264,7 @@ namespace vks
 
 		void exitFatal(std::string message, int32_t exitCode)
 		{
-#if defined(_WIN32)
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 			if (!errorModeSilent) {
 				MessageBox(NULL, message.c_str(), NULL, MB_OK | MB_ICONERROR);
 			}

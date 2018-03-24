@@ -34,7 +34,7 @@ namespace vks
 		void run(std::function<void()> renderFunc, VkPhysicalDeviceProperties deviceProps) {
 			active = true;
 			this->deviceProps = deviceProps;
-#if defined(_WIN32)
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 			AttachConsole(ATTACH_PARENT_PROCESS);
 			freopen_s(&stream, "CONOUT$", "w+", stdout);
 			freopen_s(&stream, "CONOUT$", "w+", stderr);
@@ -93,7 +93,7 @@ namespace vks
 				}
 
 				result.flush();
-#if defined(_WIN32)
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 				FreeConsole();
 #endif
 			}

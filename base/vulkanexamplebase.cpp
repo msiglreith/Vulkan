@@ -6,6 +6,8 @@
 * This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 */
 
+#include <codecvt>
+#include <locale>
 #include "vulkanexamplebase.h"
 
 std::vector<const char*> VulkanExampleBase::args;
@@ -28,8 +30,10 @@ VkResult VulkanExampleBase::createInstance(bool enableValidation)
 	std::vector<const char*> instanceExtensions = { VK_KHR_SURFACE_EXTENSION_NAME };
 
 	// Enable surface extensions depending on os
-#if defined(_WIN32)
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 	instanceExtensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_UWP_RKZ)
+    instanceExtensions.push_back("VK_RKZ_uwp_surface");
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR)
 	instanceExtensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
 #elif defined(_DIRECT2DISPLAY)
@@ -88,6 +92,15 @@ const std::string VulkanExampleBase::getAssetPath()
 {
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 	return "";
+#elif defined(VK_USE_PLATFORM_UWP_RKZ)
+    WCHAR path[512];
+    DWORD size = GetModuleFileName(nullptr, path, _countof(path));
+    WCHAR* end = wcsrchr(path, L'\\');
+    if (end) {
+        *(end + 1) = L'\0';
+    }
+    std::wstring full_path = path;
+    return std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(full_path);
 #elif defined(VK_EXAMPLE_DATA_DIR)
 	return VK_EXAMPLE_DATA_DIR;
 #else
@@ -265,7 +278,7 @@ void VulkanExampleBase::renderFrame()
 	if (fpsTimer > 1000.0f)
 	{
 		lastFPS = static_cast<uint32_t>((float)frameCounter * (1000.0f / fpsTimer));
-#if defined(_WIN32)
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 		if (!settings.overlay)	{
 			std::string windowTitle = getWindowTitle();
 			SetWindowText(window, windowTitle.c_str());
@@ -291,7 +304,7 @@ void VulkanExampleBase::renderLoop()
 
 	destWidth = width;
 	destHeight = height;
-#if defined(_WIN32)
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 	MSG msg;
 	bool quitMessageReceived = false;
 	while (!quitMessageReceived) {
@@ -304,7 +317,7 @@ void VulkanExampleBase::renderLoop()
 			}
 		}
 		renderFrame();
-	}
+    }
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR)
 	while (1)
 	{
@@ -662,9 +675,9 @@ VulkanExampleBase::VulkanExampleBase(bool enableValidation)
 #if !defined(VK_USE_PLATFORM_ANDROID_KHR)
 	// Check for a valid asset path
 	struct stat info;
-	if (stat(getAssetPath().c_str(), &info) != 0)
+	if (false) // (stat(getAssetPath().c_str(), &info) != 0)
 	{
-#if defined(_WIN32)
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 		std::string msg = "Could not locate asset path in \"" + getAssetPath() + "\" !";
 		MessageBox(NULL, msg.c_str(), "Fatal error", MB_OK | MB_ICONERROR);
 #else
@@ -754,7 +767,7 @@ VulkanExampleBase::VulkanExampleBase(bool enableValidation)
 	initxcbConnection();
 #endif
 
-#if defined(_WIN32)
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 	// Enable console if validation is active
 	// Debug message callback will output to it
 	if (this->settings.validation)
@@ -990,7 +1003,7 @@ void VulkanExampleBase::initVulkan()
 #endif	
 }
 
-#if defined(_WIN32)
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 // Win32 : Sets up a console window and redirects standard output to it
 void VulkanExampleBase::setupConsole(std::string title)
 {
@@ -2172,8 +2185,10 @@ void VulkanExampleBase::windowResized()
 
 void VulkanExampleBase::initSwapchain()
 {
-#if defined(_WIN32)
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 	swapChain.initSurface(windowInstance, window);
+#elif defined(VK_USE_PLATFORM_UWP_RKZ)
+    swapChain.initSurface(window);
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR)	
 	swapChain.initSurface(androidApp->window);
 #elif (defined(VK_USE_PLATFORM_IOS_MVK) || defined(VK_USE_PLATFORM_MACOS_MVK))

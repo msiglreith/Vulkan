@@ -8,7 +8,7 @@
 
 #pragma once
 
-#ifdef _WIN32
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 #pragma comment(linker, "/subsystem:windows")
 #include <windows.h>
 #include <fcntl.h>
@@ -54,7 +54,7 @@
 
 class VulkanExampleBase
 {
-private:	
+private:
 	// fps timer (one second interval)
 	float fpsTimer = 0.0f;
 	// Get window title with example name, device, et.
@@ -130,7 +130,7 @@ protected:
 		// UI overlay submission and execution
 		VkSemaphore overlayComplete;
 	} semaphores;
-public: 
+public:
 	bool prepared = false;
 	uint32_t width = 1280;
 	uint32_t height = 720;
@@ -168,7 +168,7 @@ public:
 	float timer = 0.0f;
 	// Multiplier for speeding up (or slowing down) the global timer
 	float timerSpeed = 0.25f;
-	
+
 	bool paused = false;
 
 	// Use to adjust mouse rotation speed
@@ -185,7 +185,7 @@ public:
 	std::string title = "Vulkan Example";
 	std::string name = "vulkanExample";
 
-	struct 
+	struct
 	{
 		VkImage image;
 		VkDeviceMemory mem;
@@ -203,10 +203,12 @@ public:
 		bool middle = false;
 	} mouseButtons;
 
-	// OS specific 
-#if defined(_WIN32)
+	// OS specific
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 	HWND window;
 	HINSTANCE windowInstance;
+#elif defined(VK_USE_PLATFORM_UWP_RKZ)
+    IUnknown* window;
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR)
 	// true if application has focused, false if moved to background
 	bool focused = false;
@@ -252,7 +254,7 @@ public:
 	// Setup the vulkan instance, enable required extensions and connect to the physical device (GPU)
 	void initVulkan();
 
-#if defined(_WIN32)
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 	void setupConsole(std::string title);
 	HWND setupWindow(HINSTANCE hinstance, WNDPROC wndproc);
 	void handleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -320,7 +322,7 @@ public:
 	// Pure virtual render function (override in derived class)
 	virtual void render() = 0;
 	// Called when view change occurs
-	// Can be overriden in derived class to e.g. update uniform buffers 
+	// Can be overriden in derived class to e.g. update uniform buffers
 	// Containing view dependant matrices
 	virtual void viewChanged();
 	/** @brief (Virtual) Called after a key was pressed, can be used to do custom key handling */
@@ -359,7 +361,7 @@ public:
 	// Create command buffers for drawing commands
 	void createCommandBuffers();
 	// Destroy all command buffers and set their handles to VK_NULL_HANDLE
-	// May be necessary during runtime if options are toggled 
+	// May be necessary during runtime if options are toggled
 	void destroyCommandBuffers();
 
 	// Command buffer creation
@@ -377,7 +379,7 @@ public:
 
 	// Load a SPIR-V shader
 	VkPipelineShaderStageCreateInfo loadShader(std::string fileName, VkShaderStageFlagBits stage);
-	
+
 	// Start the main render loop
 	void renderLoop();
 
@@ -387,11 +389,11 @@ public:
 	void updateOverlay();
 
 	// Prepare the frame for workload submission
-	// - Acquires the next image from the swap chain 
+	// - Acquires the next image from the swap chain
 	// - Sets the default wait and signal semaphores
 	void prepareFrame();
 
-	// Submit the frames' workload 
+	// Submit the frames' workload
 	void submitFrame();
 
 	/** @brief (Virtual) Called before the UI overlay is created, can be used to do a custom setup e.g. with different renderpass */
@@ -423,7 +425,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)									\
 	vulkanExample->renderLoop();																	\
 	delete(vulkanExample);																			\
 	return 0;																						\
-}																									
+}
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR)
 // Android entry point
 // A note on app_dummy(): This is required as the compiler may otherwise remove the main entry point of the application
